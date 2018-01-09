@@ -6,6 +6,26 @@
  * Time: 上午11:39
  */
 
+include('routes.php');
+
+$uri_segments; //解析uri之后，得到的数组
+$rsegments; //经过路由解析后得到的数组
+$class; //类名
+$method; //方法名
+
+$uri_string = detect_uri();
+$uri_segments = explode_uri($uri_string);
+
+parse_routes();
+
+//核心类库API，将函数注册到SPL __autoload函数队列中
+spl_autoload_register('loadClass');
+
+$obj = new $class();
+
+//核心类库API，调用回调函数，并把一个数组参数作为回调函数的参数
+call_user_func_array(array($obj, $method), array_slice($rsegments, 2));
+
 function detect_uri()
 {
     //'SCRIPT_NAME' 包含当前脚本的路径。这在页面需要指向自己时非常有用。__FILE__ 常量包含当前脚本(例如包含文件)的完整路径和文件名。
@@ -55,10 +75,8 @@ function explode_uri($uri)
 //$uri_segments = explode_uri($uri);
 //print_r($uri_segments);
 
-$uri_string = detect_uri();
-$class = explode_uri($uri_string)[0];
-$method = explode_uri($uri_string)[1];
 
+//加载类的自定义函数
 function loadClass($class)
 {
     //定位到类的路径, ucfirst()把字符串首字母大写
@@ -69,9 +87,4 @@ function loadClass($class)
     }
 }
 
-//注册
-spl_autoload_register('loadClass');
 
-$class = ucfirst($class);
-$obj = new $class();
-$obj->$method();
